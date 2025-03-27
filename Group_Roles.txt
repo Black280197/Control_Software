@@ -1,0 +1,18 @@
+{
+  "P_ERP": {
+    "block_times": [("07:30", "11:45"), ("12:45", "17:00")],
+    "block_apps": ["Zalo.exe","Discord.exe"],
+    "block_sites": ["facebook", "zalo", "messenger"],
+    "enable_blocking": 0,
+    "blocked_domains": ["www.facebook.com", "facebook.com", "m.facebook.com", "web.facebook.com"],
+    "redirect_page": "http://10.0.0.3:8009/"
+  },
+  "P_FREE": {
+    "block_times": [],
+    "block_apps": [],
+    "block_sites": [],
+    "enable_blocking": 0,
+    "blocked_domains": [],
+    "redirect_page": "http://10.0.0.3:8009/"
+  }
+}

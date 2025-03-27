@@ -1,0 +1,19 @@
+pip install pygetwindow pywinauto pyinstaller pywin32 psutil
+
+pyinstaller --onefile --noconsole block_browser_zalo.py
+pyinstaller --onefile --noconsole --icon=lock.ico Setup/Set_Up_KAM_Control.py
+pyinstaller --onefile --noconsole --icon=hidden_ava.ico block/System_LC.py
+pyinstaller --onefile --noconsole --icon=update.ico Update/SystemLC_Updater.py
+
+ Cấu hình chạy ngầm khi khởi động
+
+Mở Task Scheduler (taskschd.msc trong Run).
+Create Basic Task → Đặt tên: Block Facebook & Zalo
+Trigger: When the computer starts
+Action: Start a Program → Chọn file block_browser_zalo.exe
+Finish ✅
+
+
+schtasks /create /tn "LC" /tr "C:\Users\PC\Music\LC.exe" /sc onlogon /rl highest /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v LC /t REG_SZ /d "C:\Users\PC\Music\LC.exe" /f
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run

@@ -1,0 +1,10 @@
+{
+  "F0-2F-74-CD-41-97": {
+    "ip": "10.0.0.3",
+    "Computer_Name": "HCN-NVI-005",
+    "Group_Roles": "P_ERP",
+    "Name_Users": "Anonimous",
+    "Shot_Ready": 0,
+    "Shot_Enable": 1
+  }
+}
