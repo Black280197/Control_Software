@@ -1,9 +1,9 @@
 pip install pygetwindow pywinauto pyinstaller pywin32 psutil
 
 pyinstaller --onefile --noconsole block_browser_zalo.py
-pyinstaller --onefile --noconsole --icon=lock.ico Setup/Set_Up_KAM_Control.py
-pyinstaller --onefile --noconsole --icon=hidden_ava.ico block/System_LC.py
-pyinstaller --onefile --noconsole --icon=update.ico Update/SystemLC_Updater.py
+pyinstaller --onefile --noconsole --icon=lock.ico SETUP/Set_Up_KAM_Control.py
+pyinstaller --onefile --noconsole --icon=hidden_ava.ico MAIN/System_LC.py
+pyinstaller --onefile --noconsole --icon=update.ico UPDATE/SystemLC_Updater.py
 
  Cấu hình chạy ngầm khi khởi động
 

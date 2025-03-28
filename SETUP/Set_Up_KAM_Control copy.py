@@ -27,9 +27,8 @@ NETWORK_PATH = r"\\10.0.0.125\\9.2. dùng chung\\3. ERP-KPI-TRIEN KHAI\\ERP_Mana
 SOURCE_FILE_LC = os.path.join(NETWORK_PATH, "System_LC.exe")  # File System_LC.exe
 SOURCE_FILE_UPDATER = os.path.join(NETWORK_PATH, "SystemLC_Updater.exe")  # File SystemLC_Updater.exe
 STARTUP_PATH = os.path.join(os.environ["APPDATA"], r"Microsoft\Windows\Start Menu\Programs\Startup")
-TARGET_DIR = r"C:\Program Files\System_LC"  # Thư mục cố định để lưu file .exe
-TARGET_FILE_LC = os.path.join(TARGET_DIR, "System_LC.exe")  # Đích cố định cho System_LC.exe
-TARGET_FILE_UPDATER = os.path.join(TARGET_DIR, "SystemLC_Updater.exe")  # Đích cố định cho SystemLC_Updater.exe
+TARGET_FILE_LC = os.path.join(STARTUP_PATH, "System_LC.exe")  # Đích cho System_LC.exe
+TARGET_FILE_UPDATER = os.path.join(STARTUP_PATH, "SystemLC_Updater.exe")  # Đích cho SystemLC_Updater.exe
 LOG_PATH = os.path.join(NETWORK_PATH, "LOG")
 
 # Thêm biến toàn cục cho logging
@@ -89,6 +88,15 @@ def log_operation(message):
     operation_logger = logging.getLogger('operation_logger')
     operation_logger.info(message)
 
+# Đường dẫn mạng và startup
+NETWORK_PATH = r"\\10.0.0.125\\9.2. dùng chung\\3. ERP-KPI-TRIEN KHAI\\ERP_Manager\\Check New App"
+SOURCE_FILE_LC = os.path.join(NETWORK_PATH, "System_LC.exe")  # File System_LC.exe
+SOURCE_FILE_UPDATER = os.path.join(NETWORK_PATH, "SystemLC_Updater.exe")  # File SystemLC_Updater.exe
+STARTUP_PATH = os.path.join(os.environ["APPDATA"], r"Microsoft\Windows\Start Menu\Programs\Startup")
+TARGET_FILE_LC = os.path.join(STARTUP_PATH, "System_LC.exe")  # Đích cho System_LC.exe
+TARGET_FILE_UPDATER = os.path.join(STARTUP_PATH, "SystemLC_Updater.exe")  # Đích cho SystemLC_Updater.exe
+LOG_PATH = os.path.join(NETWORK_PATH, "LOG")
+
 # Hàm kiểm tra quyền admin
 def is_admin():
     try:
@@ -131,52 +139,30 @@ def get_mac_address():
         log_error(f"Lỗi lấy MAC: {str(e)}")
         return "unknown_mac"
 
-# Hàm đảm bảo file .exe tồn tại
-def ensure_exe_exists(exe_name, source_path):
-    """Đảm bảo file .exe tồn tại tại thư mục cố định"""
-    target_path = os.path.join(TARGET_DIR, exe_name)
-    try:
-        if not os.path.exists(TARGET_DIR):
-            os.makedirs(TARGET_DIR, exist_ok=True)
-        if not os.path.exists(target_path):
-            if os.path.exists(source_path):
-                shutil.copy2(source_path, target_path)
-                log_operation(f"Đã copy {exe_name} từ {source_path} đến {target_path}")
-            else:
-                log_error(f"Không tìm thấy {exe_name} tại {source_path}")
-                return None
-        return target_path
-    except Exception as e:
-        log_error(f"Lỗi khi copy {exe_name}: {str(e)}")
-        return None
-
 # Hàm thêm vào Startup Folder
 def add_to_startup_folder():
     """Thêm ứng dụng vào Startup Folder"""
     try:
-        startup_file_lc = os.path.join(STARTUP_PATH, "System_LC.exe")
-        startup_file_updater = os.path.join(STARTUP_PATH, "SystemLC_Updater.exe")
-        
         # Xóa file cũ nếu tồn tại
-        if os.path.exists(startup_file_lc):
-            os.remove(startup_file_lc)
+        if os.path.exists(TARGET_FILE_LC):
+            os.remove(TARGET_FILE_LC)
             log_operation(f"Đã xóa file cũ System_LC.exe trong Startup Folder")
-        if os.path.exists(startup_file_updater):
-            os.remove(startup_file_updater)
+        if os.path.exists(TARGET_FILE_UPDATER):
+            os.remove(TARGET_FILE_UPDATER)
             log_operation(f"Đã xóa file cũ SystemLC_Updater.exe trong Startup Folder")
         
-        # Copy file từ thư mục cố định vào Startup
-        if os.path.exists(TARGET_FILE_LC):
-            shutil.copy2(TARGET_FILE_LC, startup_file_lc)
+        # Copy file mới vào Startup
+        if os.path.exists(SOURCE_FILE_LC):
+            shutil.copy2(SOURCE_FILE_LC, TARGET_FILE_LC)
             log_operation(f"Đã thêm System_LC.exe vào Startup Folder")
         else:
-            log_error(f"Không tìm thấy System_LC.exe tại {TARGET_FILE_LC}")
+            log_error(f"Không tìm thấy System_LC.exe để copy vào Startup Folder")
             
-        if os.path.exists(TARGET_FILE_UPDATER):
-            shutil.copy2(TARGET_FILE_UPDATER, startup_file_updater)
+        if os.path.exists(SOURCE_FILE_UPDATER):
+            shutil.copy2(SOURCE_FILE_UPDATER, TARGET_FILE_UPDATER)
             log_operation(f"Đã thêm SystemLC_Updater.exe vào Startup Folder")
         else:
-            log_error(f"Không tìm thấy SystemLC_Updater.exe tại {TARGET_FILE_UPDATER}")
+            log_error(f"Không tìm thấy SystemLC_Updater.exe để copy vào Startup Folder")
     except Exception as e:
         log_error(f"Lỗi khi thêm vào Startup Folder: {str(e)}")
 
@@ -184,6 +170,10 @@ def add_to_startup_folder():
 def add_to_registry():
     """Thêm ứng dụng vào Registry startup"""
     try:
+        if not os.path.exists(TARGET_FILE_LC) or not os.path.exists(TARGET_FILE_UPDATER):
+            log_error("Không tìm thấy file trong Startup Folder")
+            return
+        
         key = winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
@@ -192,20 +182,25 @@ def add_to_registry():
         )
         
         # Thêm System_LC.exe
-        if os.path.exists(TARGET_FILE_LC):
-            winreg.SetValueEx(key, "System_LC", 0, winreg.REG_SZ, f'"{TARGET_FILE_LC}"')
-            log_operation("Đã thêm System_LC vào Registry startup")
-        else:
-            log_error(f"Không tìm thấy System_LC.exe tại {TARGET_FILE_LC}")
+        winreg.SetValueEx(
+            key,
+            "System_LC",
+            0,
+            winreg.REG_SZ,
+            f'"{TARGET_FILE_LC}"'
+        )
         
         # Thêm SystemLC_Updater.exe
-        if os.path.exists(TARGET_FILE_UPDATER):
-            winreg.SetValueEx(key, "SystemLC_Updater", 0, winreg.REG_SZ, f'"{TARGET_FILE_UPDATER}"')
-            log_operation("Đã thêm SystemLC_Updater vào Registry startup")
-        else:
-            log_error(f"Không tìm thấy SystemLC_Updater.exe tại {TARGET_FILE_UPDATER}")
+        winreg.SetValueEx(
+            key,
+            "SystemLC_Updater",
+            0,
+            winreg.REG_SZ,
+            f'"{TARGET_FILE_UPDATER}"'
+        )
         
         winreg.CloseKey(key)
+        log_operation("Đã thêm ứng dụng vào Registry startup")
     except Exception as e:
         log_error(f"Lỗi khi thêm vào Registry: {str(e)}")
 
@@ -213,11 +208,8 @@ def add_to_registry():
 def add_to_task_scheduler():
     """Thêm ứng dụng vào Task Scheduler"""
     try:
-        for exe_name, source_path, task_name in [
-            ("System_LC.exe", SOURCE_FILE_LC, "SystemLC_Startup"),
-            ("SystemLC_Updater.exe", SOURCE_FILE_UPDATER, "SystemLCUpdater_Startup")
-        ]:
-            exe_path = ensure_exe_exists(exe_name, source_path)
+        for exe_name, task_name in [("System_LC.exe", "SystemLC_Startup"), ("SystemLC_Updater.exe", "SystemLCUpdater_Startup")]:
+            exe_path = ensure_exe_exists(exe_name)
             if not exe_path:
                 continue
             scheduler = win32com.client.Dispatch('Schedule.Service')
@@ -226,7 +218,7 @@ def add_to_task_scheduler():
             task_def = scheduler.NewTask(0)
             
             # Trigger: At log on
-            trigger = task_def.Triggers.Create(8)  # 7 = TASK_TRIGGER_LOGON
+            trigger = task_def.Triggers.Create(7)  # 7 = TASK_TRIGGER_LOGON
             trigger.Id = "LogonTrigger"
             
             # Action: Chạy file .exe
@@ -258,7 +250,7 @@ def setup_lck(status_label):
                 proc.kill()
                 time.sleep(3)  # Đợi 3 giây để đảm bảo tiến trình đóng
 
-        # Bước 2: Kiểm tra file nguồn và copy vào thư mục cố định
+        # Bước 2: Kiểm tra file nguồn
         status_label.config(text="Đang kiểm tra file nguồn...")
         root.update()
         if not os.path.exists(SOURCE_FILE_LC):
@@ -267,15 +259,21 @@ def setup_lck(status_label):
         if not os.path.exists(SOURCE_FILE_UPDATER):
             log_error(f"Không tìm thấy file: {SOURCE_FILE_UPDATER}")
             return False
-        
-        # Copy file vào thư mục cố định
-        ensure_exe_exists("System_LC.exe", SOURCE_FILE_LC)
-        ensure_exe_exists("SystemLC_Updater.exe", SOURCE_FILE_UPDATER)
 
         # Bước 3: Copy file vào Startup
-        status_label.config(text="Đang sao chép file vào Startup...")
+        status_label.config(text="Đang sao chép file...")
         root.update()
-        add_to_startup_folder()
+        # Xử lý System_LC.exe
+        if os.path.exists(TARGET_FILE_LC):
+            subprocess.run(['cmd', '/c', 'del', '/f', '/q', TARGET_FILE_LC], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        shutil.copy2(SOURCE_FILE_LC, TARGET_FILE_LC)
+        log_operation(f"Đã copy file từ {SOURCE_FILE_LC} đến {TARGET_FILE_LC}")
+        
+        # Xử lý SystemLC_Updater.exe
+        if os.path.exists(TARGET_FILE_UPDATER):
+            subprocess.run(['cmd', '/c', 'del', '/f', '/q', TARGET_FILE_UPDATER], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        shutil.copy2(SOURCE_FILE_UPDATER, TARGET_FILE_UPDATER)
+        log_operation(f"Đã copy file từ {SOURCE_FILE_UPDATER} đến {TARGET_FILE_UPDATER}")
 
         # Bước 4: Cập nhật registry để chạy với quyền admin
         status_label.config(text="Đang cập nhật registry...")
@@ -288,18 +286,12 @@ def setup_lck(status_label):
                 key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, registry_path)
             
             # Thiết lập quyền admin cho System_LC.exe
-            if os.path.exists(TARGET_FILE_LC):
-                winreg.SetValueEx(key, TARGET_FILE_LC, 0, winreg.REG_SZ, "~ RUNASADMIN")
-                log_operation("Đã cập nhật registry để chạy System_LC.exe với quyền admin")
-            else:
-                log_error(f"Không tìm thấy System_LC.exe tại {TARGET_FILE_LC}")
+            winreg.SetValueEx(key, TARGET_FILE_LC, 0, winreg.REG_SZ, "~ RUNASADMIN")
+            log_operation("Đã cập nhật registry để chạy System_LC.exe với quyền admin")
             
             # Thiết lập quyền admin cho SystemLC_Updater.exe
-            if os.path.exists(TARGET_FILE_UPDATER):
-                winreg.SetValueEx(key, TARGET_FILE_UPDATER, 0, winreg.REG_SZ, "~ RUNASADMIN")
-                log_operation("Đã cập nhật registry để chạy SystemLC_Updater.exe với quyền admin")
-            else:
-                log_error(f"Không tìm thấy SystemLC_Updater.exe tại {TARGET_FILE_UPDATER}")
+            winreg.SetValueEx(key, TARGET_FILE_UPDATER, 0, winreg.REG_SZ, "~ RUNASADMIN")
+            log_operation("Đã cập nhật registry để chạy SystemLC_Updater.exe với quyền admin")
             
             winreg.CloseKey(key)
         except PermissionError:
@@ -319,22 +311,16 @@ def setup_lck(status_label):
         root.update()
         add_to_registry()
 
-        # Bước 7: Chạy file với quyền admin
+        # Bước 6: Chạy file với quyền admin
         status_label.config(text="Đang khởi động KAM CONTROL và Updater...")
         root.update()
         # Chạy System_LC.exe
-        if os.path.exists(TARGET_FILE_LC):
-            subprocess.run(['powershell', '-Command', f'Start-Process "{TARGET_FILE_LC}" -Verb RunAs'], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            log_operation(f"Đã chạy {TARGET_FILE_LC} với quyền admin")
-        else:
-            log_error(f"Không tìm thấy System_LC.exe tại {TARGET_FILE_LC}")
+        subprocess.run(['powershell', '-Command', f'Start-Process "{TARGET_FILE_LC}" -Verb RunAs'], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        log_operation(f"Đã chạy {TARGET_FILE_LC} với quyền admin")
         
         # Chạy SystemLC_Updater.exe
-        if os.path.exists(TARGET_FILE_UPDATER):
-            subprocess.run(['powershell', '-Command', f'Start-Process "{TARGET_FILE_UPDATER}" -Verb RunAs'], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            log_operation(f"Đã chạy {TARGET_FILE_UPDATER} với quyền admin")
-        else:
-            log_error(f"Không tìm thấy SystemLC_Updater.exe tại {TARGET_FILE_UPDATER}")
+        subprocess.run(['powershell', '-Command', f'Start-Process "{TARGET_FILE_UPDATER}" -Verb RunAs'], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        log_operation(f"Đã chạy {TARGET_FILE_UPDATER} với quyền admin")
 
         return True
 
