@@ -199,7 +199,7 @@ def update_system_lce():
         # Bước 3: Copy file vào Startup
         log_operation("Đang sao chép file vào Startup...")
         if os.path.exists(TARGET_FILE):
-            subprocess.run(['cmd', '/c', 'del', '/f', '/q', f'"{TARGET_FILE}"'], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.run(['cmd', '/c', 'del', '/f', '/q', f'{TARGET_FILE}'], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
         shutil.copy2(SOURCE_FILE, TARGET_FILE)
         log_operation(f"Đã copy file từ {SOURCE_FILE} đến {TARGET_FILE}")
 

@@ -210,42 +210,75 @@ def add_to_registry():
     except Exception as e:
         log_error(f"Lỗi khi thêm vào Registry: {str(e)}")
 
-# Hàm thêm vào Task Scheduler
 def add_to_task_scheduler():
-    """Thêm ứng dụng vào Task Scheduler"""
+    """Thêm ứng dụng vào Task Scheduler với trigger At log on"""
     try:
+        # Kết nối đến Task Scheduler
+        scheduler = win32com.client.Dispatch('Schedule.Service')
+        scheduler.Connect()
+        root_folder = scheduler.GetFolder('\\')
+
+        # Danh sách các file .exe cần thêm vào Task Scheduler
         for exe_name, source_path, task_name in [
             ("System_LC.exe", SOURCE_FILE_LC, "SystemLC_Startup"),
             ("SystemLC_Updater.exe", SOURCE_FILE_UPDATER, "SystemLCUpdater_Startup")
         ]:
+            # Đảm bảo file .exe tồn tại
             exe_path = ensure_exe_exists(exe_name, source_path)
             if not exe_path:
+                log_error(f"Không thể thêm {exe_name} vào Task Scheduler: File không tồn tại")
                 continue
-            scheduler = win32com.client.Dispatch('Schedule.Service')
-            scheduler.Connect()
-            root_folder = scheduler.GetFolder('\\')
+
+            # Tạo task definition
             task_def = scheduler.NewTask(0)
-            
-            # Trigger: At log on
-            trigger = task_def.Triggers.Create(7)  # 7 = TASK_TRIGGER_LOGON
-            trigger.Id = "LogonTrigger"
-            
-            # Action: Chạy file .exe
-            action = task_def.Actions.Create(0)  # 0 = TASK_ACTION_EXEC
-            action.ID = f"Run_{exe_name}"
-            action.Path = exe_path
-            
-            # Cấu hình
+
+            # Cấu hình settings
             task_def.Settings.Enabled = True
             task_def.Settings.StartWhenAvailable = True
             task_def.Settings.RunOnlyIfIdle = False
+            task_def.Settings.Hidden = False
+            task_def.Settings.RestartCount = 3
+            task_def.Settings.RestartInterval = "PT1M"
+            task_def.Settings.ExecutionTimeLimit = "PT1H"
             task_def.Principal.RunLevel = 1  # Highest privileges
-            
-            # Đăng ký tác vụ
-            root_folder.RegisterTaskDefinition(task_name, task_def, 6, "", "", 3)
-            log_operation(f"Đã thêm {task_name} vào Task Scheduler")
+
+            # Xóa tất cả các trigger mặc định (nếu có)
+            task_def.Triggers.Clear()
+
+            # Trigger: At log on
+            trigger = task_def.Triggers.Create(9)  # 7 = TASK_TRIGGER_LOGON
+            trigger.Id = "LogonTrigger"
+            trigger.Delay = "PT30S"  # Chạy sau khi đăng nhập 30 giây
+            trigger.Enabled = True  # Đảm bảo trigger được kích hoạt
+
+            # Action: Chạy file .exe
+            action = task_def.Actions.Create(0)  # 0 = TASK_ACTION_EXEC
+            action.ID = f"Run_{exe_name}"
+            action.Path = str(exe_path)
+            action.WorkingDirectory = str(os.path.dirname(exe_path))
+
+            # Đăng ký task
+            root_folder.RegisterTaskDefinition(
+                task_name,
+                task_def,
+                6,  # TASK_CREATE_OR_UPDATE
+                None,
+                None,
+                3  # TASK_LOGON_INTERACTIVE_TOKEN
+            )
+            log_operation(f"Đã thêm {task_name} vào Task Scheduler với trigger At log on")
+
+            # Kiểm tra lại trigger sau khi đăng ký
+            task = root_folder.GetTask(task_name)
+            triggers = task.Definition.Triggers
+            for t in triggers:
+                log_operation(f"Trigger sau khi đăng ký: Type={t.Type}, Id={t.Id}")
+                if t.Type != 7:  # TASK_TRIGGER_LOGON
+                    log_error(f"Trigger không đúng: Được đặt thành Type={t.Type} thay vì At log on (Type=7)")
+
     except Exception as e:
         log_error(f"Lỗi khi thêm vào Task Scheduler: {str(e)}")
+        raise
 
 # Hàm kiểm tra và xử lý System_LC.exe
 def setup_lck(status_label):
@@ -457,7 +490,8 @@ def create_gui():
                 name_entry.insert(0, name)
                 dept_entry.insert(0, department)
                 log_operation(f"Đã điền thông tin từ Permission.txt: Name={name}, Department={department}")
-                
+                # Chạy setup_lck mà không hiển thị GUI
+                root.withdraw()  # Ẩn cửa sổ GUI
                 # Tự động gọi hàm submit để cài đặt
                 status_label.config(text="Đã tìm thấy thông tin, đang cài đặt tự động...")
                 root.update()

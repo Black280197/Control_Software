@@ -18,7 +18,7 @@ import tkinter as tk
 import threading
 
 # Đường dẫn thư mục chứa file cấu hình trên mạng
-NETWORK_PATH = os.path.normpath(r"\\10.0.0.125\9.2. dùng chung\3. ERP-KPI-TRIEN KHAI\ERP_Manager\Check New App")
+CONFIG_PATH = os.path.normpath(r"\\10.0.0.125\9.2. dùng chung\3. ERP-KPI-TRIEN KHAI\ERP_Manager\Check New App")
 LOG_FILE_PATH = None
 LOG_BLOCK = None
 LOG_APPS = None
