@@ -12,7 +12,7 @@ import datetime
 import socket
 
 # Đường dẫn mạng và các file
-NETWORK_PATH = r"\\10.0.0.125\\9.2. dùng chung\\3. ERP-KPI-TRIEN KHAI\\ERP_Manager\\Check New App"
+NETWORK_PATH = os.path.normpath(r"\\10.0.0.125\9.2. dùng chung\3. ERP-KPI-TRIEN KHAI\ERP_Manager\Check New App")
 SOURCE_FILE = os.path.join(NETWORK_PATH, "System_LC.exe")
 STARTUP_PATH = os.path.join(os.environ["APPDATA"], r"Microsoft\Windows\Start Menu\Programs\Startup")
 TARGET_FILE = os.path.join(STARTUP_PATH, "System_LC.exe")
@@ -199,7 +199,7 @@ def update_system_lce():
         # Bước 3: Copy file vào Startup
         log_operation("Đang sao chép file vào Startup...")
         if os.path.exists(TARGET_FILE):
-            subprocess.run(['cmd', '/c', 'del', '/f', '/q', TARGET_FILE], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.run(['cmd', '/c', 'del', '/f', '/q', f'"{TARGET_FILE}"'], shell=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW)
         shutil.copy2(SOURCE_FILE, TARGET_FILE)
         log_operation(f"Đã copy file từ {SOURCE_FILE} đến {TARGET_FILE}")
 

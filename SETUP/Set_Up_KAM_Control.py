@@ -19,6 +19,7 @@ import win32gui
 import win32process
 import pyautogui
 from pywinauto import Application
+from datetime import timedelta
 import mss
 import threading
 
@@ -226,7 +227,7 @@ def add_to_task_scheduler():
             task_def = scheduler.NewTask(0)
             
             # Trigger: At log on
-            trigger = task_def.Triggers.Create(8)  # 7 = TASK_TRIGGER_LOGON
+            trigger = task_def.Triggers.Create(7)  # 7 = TASK_TRIGGER_LOGON
             trigger.Id = "LogonTrigger"
             
             # Action: Chạy file .exe
